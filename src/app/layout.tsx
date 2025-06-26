@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import Footer from '@/components/Footer'
+import { FavoritesProvider } from '@/contexts/FavoritesContext'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -69,42 +70,44 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen bg-dark-950 text-white`}>
-        <div className="relative flex min-h-screen flex-col">
-          <div className="matrix-bg fixed inset-0 -z-10" />
-          <div className="floating-particles fixed inset-0 -z-10" />
-          
-          <main className="flex-1">
-            {children}
-          </main>
-          
-          <Footer />
-          
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: 'rgb(15 23 42)',
-                color: 'rgb(241 245 249)',
-                border: '1px solid rgb(51 65 85)',
-                borderRadius: '8px',
-                fontSize: '14px',
-              },
-              success: {
-                iconTheme: {
-                  primary: 'rgb(34 197 94)',
-                  secondary: 'rgb(15 23 42)',
+        <FavoritesProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <div className="matrix-bg fixed inset-0 -z-10" />
+            <div className="floating-particles fixed inset-0 -z-10" />
+            
+            <main className="flex-1">
+              {children}
+            </main>
+            
+            <Footer />
+            
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: 'rgb(15 23 42)',
+                  color: 'rgb(241 245 249)',
+                  border: '1px solid rgb(51 65 85)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: 'rgb(239 68 68)',
-                  secondary: 'rgb(15 23 42)',
+                success: {
+                  iconTheme: {
+                    primary: 'rgb(34 197 94)',
+                    secondary: 'rgb(15 23 42)',
+                  },
                 },
-              },
-            }}
-          />
-        </div>
+                error: {
+                  iconTheme: {
+                    primary: 'rgb(239 68 68)',
+                    secondary: 'rgb(15 23 42)',
+                  },
+                },
+              }}
+            />
+          </div>
+        </FavoritesProvider>
       </body>
     </html>
   )

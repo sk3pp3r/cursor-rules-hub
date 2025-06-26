@@ -13,15 +13,18 @@ import {
   Plus, 
   Github,
   Star,
-  Zap
+  Zap,
+  Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { favoritesCount } = useFavorites();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +38,7 @@ export default function Header() {
     { name: 'Home', href: '/', icon: Home },
     { name: 'Browse Rules', href: '/rules', icon: BookOpen },
     { name: 'Categories', href: '/categories', icon: Code2 },
+    { name: 'Favorites', href: '/favorites', icon: Heart, badge: favoritesCount },
     { name: 'Submit Rule', href: '/submit', icon: Plus },
   ];
 
@@ -64,9 +68,18 @@ export default function Header() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors group"
+                className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors group relative"
               >
-                <item.icon className="h-4 w-4 group-hover:text-blue-400 transition-colors" />
+                <div className="relative">
+                  <item.icon className={`h-4 w-4 group-hover:text-blue-400 transition-colors ${
+                    item.name === 'Favorites' && favoritesCount > 0 ? 'text-red-400' : ''
+                  }`} />
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </div>
                 <span>{item.name}</span>
               </Link>
             ))}
@@ -150,7 +163,16 @@ export default function Header() {
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center space-x-3 rounded-lg p-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
                   >
-                    <item.icon className="h-5 w-5" />
+                    <div className="relative">
+                      <item.icon className={`h-5 w-5 ${
+                        item.name === 'Favorites' && favoritesCount > 0 ? 'text-red-400' : ''
+                      }`} />
+                      {item.badge && item.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </span>
+                      )}
+                    </div>
                     <span>{item.name}</span>
                   </Link>
                 ))}

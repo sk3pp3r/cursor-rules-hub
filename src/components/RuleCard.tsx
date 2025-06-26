@@ -25,6 +25,7 @@ import {
   truncateText 
 } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface RuleCardProps {
   rule: Rule;
@@ -33,9 +34,9 @@ interface RuleCardProps {
 }
 
 export default function RuleCard({ rule, variant = 'default', showPreview = false }: RuleCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { toggleFavorite, isFavorited } = useFavorites();
 
   // Ensure hydration consistency
   useEffect(() => {
@@ -57,8 +58,9 @@ export default function RuleCard({ rule, variant = 'default', showPreview = fals
   const handleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorited(!isFavorited);
-    toast.success(isFavorited ? 'Removed from favorites' : 'Added to favorites');
+    const wasAlreadyFavorited = isFavorited(rule.id);
+    toggleFavorite(rule);
+    toast.success(wasAlreadyFavorited ? 'Removed from favorites' : 'Added to favorites');
   };
 
   const cardVariants = {
@@ -155,13 +157,13 @@ export default function RuleCard({ rule, variant = 'default', showPreview = fals
                 <button
                   onClick={handleFavorite}
                   className={`p-2 rounded-lg transition-all ${
-                    isFavorited 
+                    isFavorited(rule.id) 
                       ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
                       : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-red-400'
                   }`}
-                  title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                  title={isFavorited(rule.id) ? 'Remove from favorites' : 'Add to favorites'}
                 >
-                  <Heart className={`h-4 w-4 ${isFavorited ? 'fill-current' : ''}`} />
+                  <Heart className={`h-4 w-4 ${isFavorited(rule.id) ? 'fill-current' : ''}`} />
                 </button>
                 
                 <button
