@@ -431,7 +431,7 @@ export default function RuleStats({ rating, downloads, className }: RuleStatsPro
                 <li>• Write unit tests for all utility functions</li>
                 <li>• Add component tests for complex components</li>
                 <li>• Test error states and edge cases</li>
-                <li>• Maintain >80% code coverage</li>
+                <li>• Maintain &gt;80% code coverage</li>
                 <li>• Use meaningful test descriptions</li>
               </ul>
             </div>
