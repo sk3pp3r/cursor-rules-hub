@@ -90,7 +90,7 @@ export default function Header() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com/cursor-rules-hub"
+              href="https://github.com/sk3pp3r/cursor-rules-hub"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors"
@@ -159,7 +159,7 @@ export default function Header() {
               {/* Mobile Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-slate-800">
                 <a
-                  href="https://github.com/cursor-rules-hub"
+                  href="https://github.com/sk3pp3r/cursor-rules-hub"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors"

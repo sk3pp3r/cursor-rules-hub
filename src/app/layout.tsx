@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import Footer from '@/components/Footer'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -72,7 +73,11 @@ export default function RootLayout({
           <div className="matrix-bg fixed inset-0 -z-10" />
           <div className="floating-particles fixed inset-0 -z-10" />
           
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          
+          <Footer />
           
           <Toaster
             position="bottom-right"
