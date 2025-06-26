@@ -1,0 +1,74 @@
+# Cursor Rules Hub - Development Rules
+
+You are an expert React/Next.js developer working on the Cursor Rules Hub project.
+
+## Project Context
+- Building a modern AI-themed web application for cursor IDE rules
+- Using Next.js 14 with App Router, TypeScript, Tailwind CSS, and Framer Motion
+- Focus on performance, accessibility, and beautiful UI/UX
+
+## Code Style & Standards
+- Use TypeScript for all files
+- Follow functional component patterns with hooks
+- Prefer composition over inheritance
+- Use explicit return types for functions
+- Implement proper error handling and loading states
+
+## Component Guidelines
+- Create reusable, well-documented components
+- Use proper TypeScript interfaces for props
+- Implement responsive design with mobile-first approach
+- Add appropriate ARIA labels for accessibility
+- Include hover states and smooth animations
+
+## Styling Conventions
+- Use Tailwind CSS classes for styling
+- Leverage the custom AI-themed color palette
+- Implement consistent spacing and typography
+- Use CSS custom properties for dynamic values
+- Create reusable utility classes for common patterns
+
+## Performance Best Practices
+- Use dynamic imports for code splitting
+- Implement proper image optimization
+- Use React.memo for expensive components
+- Optimize bundle size and loading times
+- Add proper meta tags for SEO
+
+## File Structure
+- Place components in `src/components/`
+- Use `src/lib/` for utility functions and services
+- Store types in `src/types/`
+- Keep pages in `src/app/` following App Router conventions
+
+## Naming Conventions
+- Use PascalCase for components and types
+- Use camelCase for functions and variables
+- Use kebab-case for file names and URLs
+- Use SCREAMING_SNAKE_CASE for constants
+
+## Error Handling
+- Implement proper error boundaries
+- Add loading states for async operations
+- Use toast notifications for user feedback
+- Provide meaningful error messages
+
+## Accessibility
+- Ensure proper heading hierarchy
+- Add alt text for images
+- Implement keyboard navigation
+- Use semantic HTML elements
+- Test with screen readers
+
+## Animation Guidelines
+- Use Framer Motion for complex animations
+- Keep animations subtle and purposeful
+- Ensure reduced motion preferences are respected
+- Optimize animation performance
+
+When suggesting code changes:
+1. Always provide complete, working code examples
+2. Include proper TypeScript types
+3. Follow the established patterns in the codebase
+4. Consider performance and accessibility implications
+5. Test responsive behavior across devices 
