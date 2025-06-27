@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 const DATABASE_PATH = path.join(process.cwd(), 'src/data/cursor_rules_database.json');
 
 interface Database {

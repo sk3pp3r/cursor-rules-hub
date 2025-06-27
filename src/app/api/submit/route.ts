@@ -6,6 +6,9 @@ import { generateId, generateSlug } from '@/lib/utils';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // Database file path
 const DATABASE_PATH = path.join(process.cwd(), 'src/data/cursor_rules_database.json');
 
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
       github_user: {
         id: session.user.githubId,
         username: session.user.githubUsername,
-        avatar_url: session.user.image
+        avatar_url: session.user.image || undefined
       }
     };
 

@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -119,5 +119,17 @@ export default function AuthErrorPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-dark-900 via-slate-900 to-dark-800 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-red-400/20 border-t-red-400 rounded-full animate-spin"></div>
+      </div>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   );
 } 
