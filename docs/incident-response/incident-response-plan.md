@@ -136,7 +136,7 @@ flowchart TD
 2. **Technical Investigation**
    ```bash
    # Quick health checks
-   curl -I https://cursor-rules-hub.vercel.app
+   curl -I https://cursor-rules-hub.haimc.xyz
    
    # Check Vercel deployment status
    vercel ls
@@ -266,10 +266,10 @@ flowchart TD
 3. **Performance Validation**
    ```bash
    # Check response times
-   curl -w "@curl-format.txt" -o /dev/null -s https://cursor-rules-hub.vercel.app
+   curl -w "@curl-format.txt" -o /dev/null -s https://cursor-rules-hub.haimc.xyz
    
    # Verify search functionality
-   curl -s "https://cursor-rules-hub.vercel.app/api/rules?search=react" | jq '.rules | length'
+   curl -s "https://cursor-rules-hub.haimc.xyz/api/rules?search=react" | jq '.rules | length'
    ```
 
 ### Rollback Procedures

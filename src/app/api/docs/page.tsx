@@ -49,7 +49,7 @@ export default function APIDocumentationPage() {
         { name: 'sort', type: 'string', required: false, description: 'Sort field: "name", "rating", "downloads", "updated_at"' },
         { name: 'order', type: 'string', required: false, description: 'Sort order: "asc" or "desc" (default: "desc")' }
       ],
-      example: `curl -X GET "https://cursor-rules-hub.vercel.app/api/rules?search=react&category=Frontend&limit=10" \\
+      example: `curl -X GET "https://cursor-rules-hub.haimc.xyz/api/rules?search=react&category=Frontend&limit=10" \\
   -H "Accept: application/json"`,
       response: `{
   "rules": [
@@ -90,7 +90,7 @@ export default function APIDocumentationPage() {
       parameters: [
         { name: 'slug', type: 'string', required: true, description: 'Unique identifier for the rule' }
       ],
-      example: `curl -X GET "https://cursor-rules-hub.vercel.app/api/rules/react-typescript-best-practices" \\
+      example: `curl -X GET "https://cursor-rules-hub.haimc.xyz/api/rules/react-typescript-best-practices" \\
   -H "Accept: application/json"`,
       response: `{
   "rule": {
@@ -129,7 +129,7 @@ export default function APIDocumentationPage() {
       title: 'Get Categories',
       description: 'Retrieve all available rule categories with rule counts',
       parameters: [],
-      example: `curl -X GET "https://cursor-rules-hub.vercel.app/api/categories" \\
+      example: `curl -X GET "https://cursor-rules-hub.haimc.xyz/api/categories" \\
   -H "Accept: application/json"`,
       response: `{
   "categories": [
@@ -165,7 +165,7 @@ export default function APIDocumentationPage() {
       parameters: [
         { name: 'popular', type: 'boolean', required: false, description: 'Return only popular tags (used in 5+ rules)' }
       ],
-      example: `curl -X GET "https://cursor-rules-hub.vercel.app/api/tags?popular=true" \\
+      example: `curl -X GET "https://cursor-rules-hub.haimc.xyz/api/tags?popular=true" \\
   -H "Accept: application/json"`,
       response: `{
   "tags": [
@@ -205,7 +205,7 @@ export default function APIDocumentationPage() {
         { name: 'threshold', type: 'number', required: false, description: 'Minimum similarity score (0.0-1.0, default: 0.3)' },
         { name: 'limit', type: 'number', required: false, description: 'Number of results (default: 20, max: 50)' }
       ],
-      example: `curl -X GET "https://cursor-rules-hub.vercel.app/api/search?q=react%20hooks&fuzzy=true&limit=5" \\
+      example: `curl -X GET "https://cursor-rules-hub.haimc.xyz/api/search?q=react%20hooks&fuzzy=true&limit=5" \\
   -H "Accept: application/json"`,
       response: `{
   "results": [
@@ -245,7 +245,7 @@ export default function APIDocumentationPage() {
       id: 'javascript',
       title: 'JavaScript/Node.js',
       code: `// Using fetch API
-const response = await fetch('https://cursor-rules-hub.vercel.app/api/rules?search=react&limit=10');
+const response = await fetch('https://cursor-rules-hub.haimc.xyz/api/rules?search=react&limit=10');
 const data = await response.json();
 
 console.log(\`Found \${data.rules.length} rules\`);
@@ -258,7 +258,7 @@ const axios = require('axios');
 
 const getRules = async (searchQuery) => {
   try {
-    const response = await axios.get('https://cursor-rules-hub.vercel.app/api/rules', {
+    const response = await axios.get('https://cursor-rules-hub.haimc.xyz/api/rules', {
       params: {
         search: searchQuery,
         category: 'Frontend',
@@ -279,7 +279,7 @@ const getRules = async (searchQuery) => {
 import json
 
 # Basic request
-response = requests.get('https://cursor-rules-hub.vercel.app/api/rules')
+response = requests.get('https://cursor-rules-hub.haimc.xyz/api/rules')
 data = response.json()
 
 print(f"Found {len(data['rules'])} rules")
@@ -299,7 +299,7 @@ def search_rules(query, category=None, tags=None, limit=50):
         params['tags'] = ','.join(tags)
     
     response = requests.get(
-        'https://cursor-rules-hub.vercel.app/api/rules',
+        'https://cursor-rules-hub.haimc.xyz/api/rules',
         params=params
     )
     
@@ -323,27 +323,27 @@ if results:
       id: 'curl',
       title: 'cURL',
       code: `# Get all rules
-curl -X GET "https://cursor-rules-hub.vercel.app/api/rules" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/rules" \\
   -H "Accept: application/json"
 
 # Search with filters
-curl -X GET "https://cursor-rules-hub.vercel.app/api/rules?search=react&category=Frontend&tags=typescript,hooks&limit=10" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/rules?search=react&category=Frontend&tags=typescript,hooks&limit=10" \\
   -H "Accept: application/json"
 
 # Get specific rule
-curl -X GET "https://cursor-rules-hub.vercel.app/api/rules/react-typescript-best-practices" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/rules/react-typescript-best-practices" \\
   -H "Accept: application/json"
 
 # Advanced search
-curl -X GET "https://cursor-rules-hub.vercel.app/api/search?q=react%20hooks&fuzzy=true&threshold=0.5" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/search?q=react%20hooks&fuzzy=true&threshold=0.5" \\
   -H "Accept: application/json"
 
 # Get categories
-curl -X GET "https://cursor-rules-hub.vercel.app/api/categories" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/categories" \\
   -H "Accept: application/json"
 
 # Get popular tags
-curl -X GET "https://cursor-rules-hub.vercel.app/api/tags?popular=true" \\
+curl -X GET "https://cursor-rules-hub.haimc.xyz/api/tags?popular=true" \\
   -H "Accept: application/json"`
     }
   ];
@@ -396,7 +396,7 @@ curl -X GET "https://cursor-rules-hub.vercel.app/api/tags?popular=true" \\
             <div className="cyber-card p-4">
               <Globe className="h-6 w-6 text-blue-400 mx-auto mb-2" />
               <h3 className="font-semibold text-white">Base URL</h3>
-              <p className="text-sm text-slate-300 break-all">cursor-rules-hub.vercel.app</p>
+              <p className="text-sm text-slate-300 break-all">cursor-rules-hub.haimc.xyz</p>
             </div>
             <div className="cyber-card p-4">
               <Database className="h-6 w-6 text-purple-400 mx-auto mb-2" />

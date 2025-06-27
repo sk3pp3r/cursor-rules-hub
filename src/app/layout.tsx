@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://cursor-rules-hub.dev'),
+  metadataBase: new URL('https://cursor-rules-hub.haimc.xyz'),
   openGraph: {
     title: 'Cursor Rules Hub - AI-Powered IDE Rules Repository',
     description: 'Discover, share, and manage Cursor IDE rules and configurations',
-    url: 'https://cursor-rules-hub.dev',
+    url: 'https://cursor-rules-hub.haimc.xyz',
     siteName: 'Cursor Rules Hub',
     images: [
       {

@@ -656,7 +656,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
   <p>Built with ❤️ for the Cursor IDE community</p>
   <p>
-    <a href="https://cursor-rules-hub.vercel.app">🌐 Live Demo</a> •
+    <a href="https://cursor-rules-hub.haimc.xyz">🌐 Live Demo</a> •
     <a href="https://github.com/sk3pp3r/cursor-rules-hub/issues">🐛 Report Bug</a> •
     <a href="https://github.com/sk3pp3r/cursor-rules-hub/issues">✨ Request Feature</a>
   </p>

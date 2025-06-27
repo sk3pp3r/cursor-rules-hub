@@ -24,7 +24,7 @@ This runbook provides step-by-step procedures for deploying the Cursor Rules Hub
 ### Environment Variables
 ```bash
 # Required for production
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
+NEXT_PUBLIC_SITE_URL=https://cursor-rules-hub.haimc.xyz
 NEXT_PUBLIC_GA_ID=GA_MEASUREMENT_ID (optional)
 
 # Optional monitoring
@@ -183,7 +183,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_SITE_URL=https://your-domain.com
+      - NEXT_PUBLIC_SITE_URL=https://cursor-rules-hub.haimc.xyz
       - NODE_ENV=production
     restart: unless-stopped
 ```
@@ -221,7 +221,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NEXT_PUBLIC_SITE_URL
-          value: "https://your-domain.com"
+          value: "https://cursor-rules-hub.haimc.xyz"
 ---
 apiVersion: v1
 kind: Service
