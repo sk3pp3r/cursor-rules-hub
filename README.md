@@ -660,4 +660,49 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
     <a href="https://github.com/sk3pp3r/cursor-rules-hub/issues">🐛 Report Bug</a> •
     <a href="https://github.com/sk3pp3r/cursor-rules-hub/issues">✨ Request Feature</a>
   </p>
-</div> 
+</div>
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ and npm
+- Git
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/cursor-rules-hub.git
+cd cursor-rules-hub
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+# Edit .env.local with your configuration
+```
+
+4. Run the development server:
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 🛠️ Troubleshooting
+
+### Punycode Deprecation Warning
+If you see a deprecation warning about the `punycode` module:
+```
+(node:xxxxx) [DEP0040] DeprecationWarning: The `punycode` module is deprecated
+```
+
+This warning has been suppressed in the npm scripts using `NODE_OPTIONS='--disable-warning=DEP0040'`. The warning comes from an ESLint dependency and doesn't affect functionality.
+
+## 🧩 Available Scripts 

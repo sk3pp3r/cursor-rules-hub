@@ -4,10 +4,10 @@
   "description": "A modern, AI-themed web application for Cursor IDE rules and configurations",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "NODE_OPTIONS='--disable-warning=DEP0040' next dev",
+    "build": "NODE_OPTIONS='--disable-warning=DEP0040' next build",
+    "start": "NODE_OPTIONS='--disable-warning=DEP0040' next start",
+    "lint": "NODE_OPTIONS='--disable-warning=DEP0040' next lint",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
