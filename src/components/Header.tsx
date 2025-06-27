@@ -14,7 +14,8 @@ import {
   Github,
   Star,
   Zap,
-  Heart
+  Heart,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,7 @@ export default function Header() {
     { name: 'Categories', href: '/categories', icon: Code2 },
     { name: 'Favorites', href: '/favorites', icon: Heart, badge: favoritesCount },
     { name: 'Submit Rule', href: '/submit', icon: Plus },
+    { name: 'Admin', href: '/admin', icon: Settings },
   ];
 
   return (

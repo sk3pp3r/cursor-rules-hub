@@ -1,14 +1,39 @@
 {
   "meta": {
     "version": "1.0.0",
-    "total_rules": 326,
-    "last_updated": "2024-01-01",
+    "total_rules": 327,
+    "last_updated": "2025-06-27T12:27:27.013Z",
     "sources": [
       "PatrickJS/awesome-cursorrules",
-      "sk3pp3r/awesome-cursorrules"
+      "sk3pp3r/awesome-cursorrules",
+      "community-submission"
     ]
   },
   "rules": [
+    {
+      "id": "mceseuudsebwss1c1d",
+      "name": "DOS 6.22",
+      "slug": "dos-622",
+      "description": "some dos 6.22 rule for geekssome dos 6.22 rule for geeks\nsome dos 6.22 rule for geeks",
+      "content": "Rule submission received: {\n  id: 'mces8jaybamfkg0warc',\n  name: 'DOS 6.22',\n  author: 'BIBI',\n  category: 'Other',\n  tags: [ 'dos', '622' ],\n  content_length: 2070,\n  usage_examples: 'None provided',\n  prerequisites: 'None provided',\n  compatibility_notes: 'dos6.22',\n  external_links: []\n}\n POST /api/submit 201 in 634ms",
+      "author": "haim",
+      "source_repo": "community-submission",
+      "categories": [
+        "Other"
+      ],
+      "tags": [
+        "dos"
+      ],
+      "created_at": "2025-06-27T12:27:27.013Z",
+      "updated_at": "2025-06-27T12:27:27.013Z",
+      "rating": 0,
+      "downloads": 0,
+      "favorites": 0,
+      "file_size": 322,
+      "language_support": [
+        "General"
+      ]
+    },
     {
       "id": "b1e27b62",
       "name": "Knative Istio Typesense GPU .cursorrules prompt file",

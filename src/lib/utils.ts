@@ -47,6 +47,10 @@ export function formatRelativeTime(dateString: string): string {
   return `${Math.floor(diffInDays / 365)} years ago`;
 }
 
+export function generateId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
