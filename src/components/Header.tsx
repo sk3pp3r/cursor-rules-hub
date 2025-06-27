@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { 
   Search, 
   Menu, 
@@ -15,7 +16,10 @@ import {
   Star,
   Zap,
   Heart,
-  Settings
+  Settings,
+  User,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -23,9 +27,11 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const { favoritesCount } = useFavorites();
+  const { data: session, status } = useSession();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +39,11 @@ export default function Header() {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/' });
+    setIsUserMenuOpen(false);
   };
 
   const navigation = [
@@ -87,8 +98,9 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Search Bar */}
+          {/* Right Side */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Search Bar */}
             <form onSubmit={handleSearch} className="relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -118,6 +130,70 @@ export default function Header() {
               <Star className="h-4 w-4" />
               <span className="text-sm font-medium">Star</span>
             </button>
+
+            {/* Authentication */}
+            {status === 'loading' ? (
+              <div className="w-8 h-8 bg-slate-700 rounded-full animate-pulse"></div>
+            ) : session ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  <img
+                    src={session.user?.image || '/default-avatar.png'}
+                    alt={session.user?.name || 'User'}
+                    className="w-8 h-8 rounded-full border-2 border-slate-600"
+                  />
+                  <span className="text-sm text-slate-300 max-w-24 truncate">
+                    {session.user?.name || session.user?.email}
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg py-2"
+                    >
+                      <div className="px-4 py-2 border-b border-slate-700">
+                        <p className="text-sm font-medium text-white truncate">
+                          {session.user?.name}
+                        </p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {session.user?.email}
+                        </p>
+                      </div>
+                      <Link
+                        href="/profile"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors w-full text-left"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <button
+                onClick={() => signIn('github')}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 transition-colors"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Sign in</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -155,6 +231,46 @@ export default function Header() {
                   />
                 </div>
               </form>
+
+              {/* Mobile Authentication */}
+              {status !== 'loading' && (
+                <div className="border-b border-slate-800 pb-4">
+                  {session ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-3 p-3 bg-slate-800/50 rounded-lg">
+                        <img
+                          src={session.user?.image || '/default-avatar.png'}
+                          alt={session.user?.name || 'User'}
+                          className="w-10 h-10 rounded-full border-2 border-slate-600"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white truncate">
+                            {session.user?.name}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {session.user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors w-full"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => signIn('github')}
+                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 transition-colors w-full justify-center"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span>Sign in with GitHub</span>
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Mobile Navigation */}
               <nav className="space-y-2">
@@ -201,6 +317,14 @@ export default function Header() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Click outside to close user menu */}
+      {isUserMenuOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsUserMenuOpen(false)}
+        />
+      )}
     </header>
   );
 } 

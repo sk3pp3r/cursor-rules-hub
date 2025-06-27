@@ -60,6 +60,9 @@ jspm_packages/
 .env.production.local
 .env*.local
 
+# NextAuth.js
+.nextauth/
+
 # Vercel
 .vercel
 
@@ -104,3 +107,38 @@ import_*.txt
 # Backup files
 *.bak
 *.backup
+
+# Database backups and exports
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated documentation
+docs/build/
+*.md.bak
+
+# Package manager lock files (keep only one)
+# Uncomment the one you're NOT using:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local development files
+.history/
+.cache/
+.parcel-cache/
+
+# Generated rule files (if any automation scripts create these)
+generated_rules_*.json
+rules_export_*.json

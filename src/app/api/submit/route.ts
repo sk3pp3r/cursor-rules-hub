@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import { RuleSubmission, Rule } from '@/types/rule';
 import { generateId, generateSlug } from '@/lib/utils';
 import fs from 'fs/promises';
@@ -38,6 +40,15 @@ async function saveDatabase(database: Database): Promise<void> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in to submit a rule.' },
+        { status: 401 }
+      );
+    }
+
     const submission: RuleSubmission = await request.json();
 
     // Validate required fields
@@ -76,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Load existing database
     const database = await loadDatabase();
 
-    // Generate rule data
+    // Generate rule data with authenticated user information
     const now = new Date().toISOString();
     const rule: Rule = {
       id: generateId(),
@@ -94,7 +105,13 @@ export async function POST(request: NextRequest) {
       downloads: 0,
       favorites: 0,
       file_size: new Blob([submission.content]).size,
-      language_support: extractLanguageSupport(submission.content, submission.tags)
+      language_support: extractLanguageSupport(submission.content, submission.tags),
+      // Add GitHub user information for tracking
+      github_user: {
+        id: session.user.githubId,
+        username: session.user.githubUsername,
+        avatar_url: session.user.image
+      }
     };
 
     // Add the new rule to the database
@@ -114,13 +131,20 @@ export async function POST(request: NextRequest) {
       id: rule.id,
       name: rule.name,
       author: rule.author,
+      github_user: rule.github_user?.username,
       category: submission.category,
       tags: rule.tags,
       content_length: rule.content.length,
       usage_examples: submission.usage_examples || 'None provided',
       prerequisites: submission.prerequisites || 'None provided',
       compatibility_notes: submission.compatibility_notes || 'None provided',
-      external_links: submission.external_links || []
+      external_links: submission.external_links || [],
+      submitted_by: {
+        user_id: session.user.githubId,
+        username: session.user.githubUsername,
+        email: session.user.email,
+        name: session.user.name
+      }
     });
 
     return NextResponse.json({
@@ -131,7 +155,8 @@ export async function POST(request: NextRequest) {
         name: rule.name,
         slug: rule.slug,
         author: rule.author,
-        category: submission.category
+        category: submission.category,
+        github_user: rule.github_user?.username
       }
     }, { status: 201 });
 

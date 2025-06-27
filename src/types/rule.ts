@@ -15,6 +15,11 @@ export interface Rule {
   favorites: number;
   file_size: number;
   language_support: string[];
+  github_user?: {
+    id?: string;
+    username?: string;
+    avatar_url?: string;
+  };
 }
 
 export interface RuleDatabase {
