@@ -10,14 +10,48 @@ from pathlib import Path
 from typing import Dict, List, Any
 import hashlib
 
-def extract_metadata_from_readme(readme_path: str) -> Dict[str, Any]:
-    """Extract metadata from README.md file if it exists"""
+def validate_path(base_path: str, target_path: str) -> bool:
+    """
+    Validate that target_path is within base_path to prevent path traversal attacks.
+    Returns True if path is safe, False otherwise.
+    """
+    try:
+        # Resolve both paths to absolute paths
+        base_abs = os.path.abspath(base_path)
+        target_abs = os.path.abspath(target_path)
+        
+        # Check if target path starts with base path
+        return target_abs.startswith(base_abs)
+    except (OSError, ValueError):
+        return False
+
+def safe_read_file(file_path: str, base_path: str) -> str:
+    """
+    Safely read a file with path validation.
+    """
+    if not validate_path(base_path, file_path):
+        raise ValueError(f"Path traversal attempt detected: {file_path}")
+    
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+def extract_metadata_from_readme(readme_path: str, base_path: str = None) -> Dict[str, Any]:
+    """Extract metadata from README.md file with security validation"""
+    if base_path is None:
+        base_path = os.getcwd()
+    
+    if not validate_path(base_path, readme_path):
+        print(f"Security: Rejected path traversal attempt: {readme_path}")
+        return {}
+    
     if not os.path.exists(readme_path):
         return {}
     
     try:
-        with open(readme_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        content = safe_read_file(readme_path, base_path)
         
         metadata = {}
         
@@ -143,13 +177,16 @@ def extract_rules_from_repo(repo_path: str, repo_name: str) -> List[Dict[str, An
             continue
         
         try:
-            # Read the cursorrules content
-            with open(cursorrules_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            # Read the cursorrules content with security validation
+            if not validate_path(repo_path, cursorrules_path):
+                print(f"Security: Rejected path traversal attempt: {cursorrules_path}")
+                continue
+            
+            content = safe_read_file(cursorrules_path, repo_path)
             
             # Extract metadata from README if exists
             readme_path = os.path.join(rule_folder_path, 'README.md')
-            metadata = extract_metadata_from_readme(readme_path)
+            metadata = extract_metadata_from_readme(readme_path, repo_path)
             
             # Generate unique ID
             rule_id = hashlib.md5(f"{repo_name}_{rule_folder}".encode()).hexdigest()[:8]
