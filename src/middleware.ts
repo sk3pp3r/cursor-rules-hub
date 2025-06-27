@@ -5,21 +5,22 @@ export function middleware(request: NextRequest) {
   // Create response
   const response = NextResponse.next();
 
-  // Content Security Policy (CSP)
+  // Enhanced Content Security Policy (CSP)
   const cspPolicy = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: http:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://vercel.live https://api.github.com https://github.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "connect-src 'self' https://vercel.live https://api.github.com https://github.com https://vitals.vercel-insights.com",
     "frame-src 'self' https://vercel.live",
-    "media-src 'self'",
+    "media-src 'self' data:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
+    "upgrade-insecure-requests",
+    "block-all-mixed-content"
   ].join('; ');
 
   // Security Headers
@@ -30,18 +31,15 @@ export function middleware(request: NextRequest) {
     // Frame Protection (redundant with CSP frame-ancestors, but good for older browsers)
     'X-Frame-Options': 'DENY',
     
-    // Remove X-Powered-By header (this removes server information leakage)
-    'X-Powered-By': '',
-    
     // Additional Security Headers
     'X-Content-Type-Options': 'nosniff',
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()',
     
     // HSTS (HTTP Strict Transport Security) - Only set in production
     ...(process.env.NODE_ENV === 'production' && {
-      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
+      'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload'
     })
   };
 
@@ -49,9 +47,6 @@ export function middleware(request: NextRequest) {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     if (value) {
       response.headers.set(key, value);
-    } else {
-      // Remove header if value is empty (for X-Powered-By)
-      response.headers.delete(key);
     }
   });
 
@@ -59,15 +54,15 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Apply middleware to all routes except static files and API routes that don't need CSP
+  // Apply middleware to all routes including API routes
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public files (images, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon|.*\\.(?:ico|png|jpg|jpeg|gif|svg|webp|js|css|woff|woff2|ttf|otf|eot)$).*)',
   ],
 }; 
