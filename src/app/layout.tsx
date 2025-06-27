@@ -6,6 +6,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import SessionProvider from '@/contexts/SessionProvider'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -130,6 +131,7 @@ export default function RootLayout({
             </div>
           </FavoritesProvider>
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   )
