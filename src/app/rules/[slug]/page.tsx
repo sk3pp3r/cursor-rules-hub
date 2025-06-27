@@ -1,37 +1,35 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, 
-  Star, 
   Download, 
   Copy, 
   Heart, 
-  Calendar,
-  User,
-  FileText,
-  Tag,
+  Star, 
+  Eye, 
+  Calendar, 
+  User, 
+  Tag, 
+  FileText, 
+  Github,
   ExternalLink,
-  Github
+  Check,
+  ArrowLeft,
+  Share2
 } from 'lucide-react';
-import Header from '@/components/Header';
+import Link from 'next/link';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { RuleService } from '@/lib/database';
-import { 
-  formatNumber, 
-  formatFileSize, 
-  formatRelativeTime, 
-  copyToClipboard, 
-  getCategoryColor
-} from '@/lib/utils';
+import { Rule } from '@/types/rule';
+import { useFavorites } from '@/contexts/FavoritesContext';
+import { formatDate, formatFileSize, getCategoryColor, copyToClipboard, formatNumber, formatRelativeTime } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface RulePageProps {
-  params: {
-    slug: string;
-  };
+  params: { slug: string };
 }
 
 export default function RulePage({ params }: RulePageProps) {
@@ -55,8 +53,6 @@ export default function RulePage({ params }: RulePageProps) {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <motion.div

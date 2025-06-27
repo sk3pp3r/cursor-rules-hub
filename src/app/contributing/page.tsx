@@ -19,7 +19,6 @@ import {
   Coffee,
   Award
 } from 'lucide-react';
-import Header from '@/components/Header';
 import { copyToClipboard } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -210,7 +209,6 @@ export default function ContributingGuidePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       
       <main className="container mx-auto px-4 py-8">
         {/* Header */}

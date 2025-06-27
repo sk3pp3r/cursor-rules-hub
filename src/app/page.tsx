@@ -17,7 +17,6 @@ import {
   BookOpen,
   Plus
 } from 'lucide-react';
-import Header from '@/components/Header';
 import RuleCard from '@/components/RuleCard';
 import { RuleService } from '@/lib/database';
 
@@ -77,8 +76,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main>
         {/* Hero Section */}
         <section className="relative py-20 overflow-hidden">

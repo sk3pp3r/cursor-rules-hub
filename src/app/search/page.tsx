@@ -4,7 +4,6 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, Filter } from 'lucide-react';
-import Header from '@/components/Header';
 import RuleCard from '@/components/RuleCard';
 import { RuleService } from '@/lib/database';
 import { Rule } from '@/types/rule';
@@ -97,8 +96,6 @@ function SearchResults() {
 export default function SearchPage() {
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

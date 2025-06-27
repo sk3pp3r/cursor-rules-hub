@@ -14,7 +14,6 @@ import {
   Plus, 
   Github,
   Star,
-  Zap,
   Heart,
   Settings,
   User,
@@ -50,28 +49,30 @@ export default function Header() {
     { name: 'Home', href: '/', icon: Home },
     { name: 'Browse Rules', href: '/rules', icon: BookOpen },
     { name: 'Categories', href: '/categories', icon: Code2 },
-    { name: 'Favorites', href: '/favorites', icon: Heart, badge: favoritesCount },
     { name: 'Submit Rule', href: '/submit', icon: Plus },
-    { name: 'Admin', href: '/admin', icon: Settings },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800 bg-dark-900/80 backdrop-blur-lg">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-24 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group">
+          <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 opacity-75 blur-sm group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-2">
-                <Zap className="h-6 w-6 text-white" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 opacity-75 blur-sm group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 p-3">
+                <img 
+                  src="/logo-optimized.png" 
+                  alt="Cursor Rules Hub Logo" 
+                  className="h-12 w-12 object-contain filter brightness-110"
+                />
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-cyber">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-cyber">
                 Cursor Rules Hub
               </span>
-              <span className="text-xs text-slate-400 -mt-1">AI-Powered IDE Rules</span>
+              <span className="text-sm text-slate-400 -mt-1 font-medium">AI-Powered IDE Rules</span>
             </div>
           </Link>
 
@@ -84,14 +85,7 @@ export default function Header() {
                 className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors group relative"
               >
                 <div className="relative">
-                  <item.icon className={`h-4 w-4 group-hover:text-blue-400 transition-colors ${
-                    item.name === 'Favorites' && favoritesCount > 0 ? 'text-red-400' : ''
-                  }`} />
-                  {item.badge && item.badge > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
-                  )}
+                  <item.icon className="h-4 w-4 group-hover:text-blue-400 transition-colors" />
                 </div>
                 <span>{item.name}</span>
               </Link>
@@ -138,7 +132,7 @@ export default function Header() {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  className="flex items-center space-x-2 p-1 rounded-lg hover:bg-slate-800 transition-colors relative"
                 >
                   <img
                     src={session.user?.image || '/default-avatar.png'}
@@ -148,6 +142,12 @@ export default function Header() {
                   <span className="text-sm text-slate-300 max-w-24 truncate">
                     {session.user?.name || session.user?.email}
                   </span>
+                  {/* Favorites Badge */}
+                  {favoritesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      {favoritesCount > 99 ? '99+' : favoritesCount}
+                    </span>
+                  )}
                 </button>
 
                 <AnimatePresence>
@@ -173,6 +173,21 @@ export default function Header() {
                       >
                         <User className="h-4 w-4" />
                         <span>Profile</span>
+                      </Link>
+                      <Link
+                        href="/favorites"
+                        className="flex items-center space-x-2 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors relative"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <div className="relative">
+                          <Heart className={`h-4 w-4 ${favoritesCount > 0 ? 'text-red-400' : ''}`} />
+                          {favoritesCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium text-[10px]">
+                              {favoritesCount > 9 ? '9+' : favoritesCount}
+                            </span>
+                          )}
+                        </div>
+                        <span>Favorites</span>
                       </Link>
                       <button
                         onClick={handleSignOut}
@@ -252,13 +267,38 @@ export default function Header() {
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors w-full"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Sign out</span>
-                      </button>
+                      <div className="space-y-1">
+                        <Link
+                          href="/profile"
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors w-full"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                        <Link
+                          href="/favorites"
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors w-full relative"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="relative">
+                            <Heart className={`h-4 w-4 ${favoritesCount > 0 ? 'text-red-400' : ''}`} />
+                            {favoritesCount > 0 && (
+                              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium text-[10px]">
+                                {favoritesCount > 9 ? '9+' : favoritesCount}
+                              </span>
+                            )}
+                          </div>
+                          <span>Favorites</span>
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center space-x-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors w-full"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>Sign out</span>
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
@@ -282,14 +322,7 @@ export default function Header() {
                     className="flex items-center space-x-3 rounded-lg p-3 text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
                   >
                     <div className="relative">
-                      <item.icon className={`h-5 w-5 ${
-                        item.name === 'Favorites' && favoritesCount > 0 ? 'text-red-400' : ''
-                      }`} />
-                      {item.badge && item.badge > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
-                          {item.badge > 9 ? '9+' : item.badge}
-                        </span>
-                      )}
+                      <item.icon className="h-5 w-5" />
                     </div>
                     <span>{item.name}</span>
                   </Link>

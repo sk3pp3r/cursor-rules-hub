@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, 
   Search, 
@@ -19,7 +19,6 @@ import {
   Folder,
   AlertCircle
 } from 'lucide-react';
-import Header from '@/components/Header';
 import RuleCard from '@/components/RuleCard';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Rule } from '@/types/rule';
@@ -135,8 +134,6 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div

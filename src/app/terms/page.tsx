@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Scale, Users, Shield, AlertTriangle, FileText, Calendar, CheckCircle } from 'lucide-react';
-import Header from '@/components/Header';
+import { ArrowLeft, FileText, Scale, Shield, AlertTriangle, Users, CheckCircle, Calendar } from 'lucide-react';
 
-export default function TermsOfServicePage() {
+export default function TermsPage() {
   const lastUpdated = "January 1, 2025";
   const effectiveDate = "January 1, 2025";
 
@@ -233,9 +233,7 @@ export default function TermsOfServicePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

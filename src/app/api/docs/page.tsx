@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Code, 
   Database, 
   Key, 
   Globe, 
@@ -16,7 +15,6 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import Header from '@/components/Header';
 import { copyToClipboard } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -365,7 +363,6 @@ curl -X GET "https://cursor-rules-hub.haimc.xyz/api/tags?popular=true" \\
 
   return (
     <div className="min-h-screen">
-      <Header />
       
       <main className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -378,7 +375,11 @@ curl -X GET "https://cursor-rules-hub.haimc.xyz/api/tags?popular=true" \\
             <div className="relative">
               <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 opacity-75 blur-sm"></div>
               <div className="relative rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-3">
-                <Code className="h-8 w-8 text-white" />
+                <img 
+                  src="/logo-optimized.png" 
+                  alt="Cursor Rules Hub Logo" 
+                  className="h-8 w-8 object-contain"
+                />
               </div>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white">

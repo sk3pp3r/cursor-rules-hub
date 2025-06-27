@@ -12,7 +12,6 @@ import {
   X,
   ChevronDown
 } from 'lucide-react';
-import Header from '@/components/Header';
 import RuleCard from '@/components/RuleCard';
 import { RuleService } from '@/lib/database';
 import { Rule, SearchFilters, SortOption } from '@/types/rule';
@@ -126,8 +125,6 @@ export default function RulesPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">

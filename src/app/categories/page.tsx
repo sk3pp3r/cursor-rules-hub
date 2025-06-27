@@ -1,17 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Code2, Tag } from 'lucide-react';
-import Header from '@/components/Header';
+import { Code2, Tag, Search, Filter } from 'lucide-react';
 import { RuleService } from '@/lib/database';
 import { getCategoryColor } from '@/lib/utils';
 
 export default function CategoriesPage() {
   const ruleService = RuleService.getInstance();
+  const [searchQuery, setSearchQuery] = useState('');
   const categories = ruleService.getCategories();
   const stats = ruleService.getStatsOverview();
+
+  const filteredCategories = categories.filter(category =>
+    category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const container = {
     hidden: { opacity: 0 },
@@ -30,8 +34,6 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,7 +54,7 @@ export default function CategoriesPage() {
           animate="show"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
-          {categories.map((category) => {
+          {filteredCategories.map((category) => {
             const categoryStats = stats.categoryStats.find(s => s.name === category);
             const count = categoryStats?.count || 0;
             

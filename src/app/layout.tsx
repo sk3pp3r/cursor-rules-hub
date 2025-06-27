@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import SessionProvider from '@/contexts/SessionProvider'
@@ -76,6 +77,8 @@ export default function RootLayout({
             <div className="relative flex min-h-screen flex-col">
               <div className="matrix-bg fixed inset-0 -z-10" />
               <div className="floating-particles fixed inset-0 -z-10" />
+              
+              <Header />
               
               <main className="flex-1">
                 {children}

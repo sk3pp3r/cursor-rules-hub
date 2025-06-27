@@ -8,7 +8,6 @@ import {
   Github, 
   Linkedin,
   Mail,
-  Zap,
   ExternalLink
 } from 'lucide-react';
 
@@ -47,7 +46,11 @@ export default function Footer() {
               <div className="relative">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 opacity-75 blur-sm"></div>
                 <div className="relative rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-2">
-                  <Zap className="h-5 w-5 text-white" />
+                  <img 
+                    src="/logo-optimized.png" 
+                    alt="Cursor Rules Hub Logo" 
+                    className="h-5 w-5 object-contain"
+                  />
                 </div>
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent font-cyber">
