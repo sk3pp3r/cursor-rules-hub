@@ -5,13 +5,32 @@ import { motion } from 'framer-motion';
 import { Upload, FileText, Globe, Lock } from 'lucide-react';
 import SubmitRuleForm from '@/components/SubmitRuleForm';
 import { RuleSubmission } from '@/types/rule';
+import { useSubmitRule } from '@/hooks/useSubmitRule';
+import { useRouter } from 'next/navigation';
 
 export default function SubmitPage() {
-  const [uploadMethod, setUploadMethod] = useState<'form' | 'github'>('form');
+  const router = useRouter();
+  const { submitRule, isSubmitting, error, success } = useSubmitRule();
 
   const handleFormSubmit = async (submission: RuleSubmission) => {
-    // Handle form submission
-    console.log('Form submitted:', submission);
+    try {
+      const result = await submitRule(submission);
+      console.log('Rule submitted successfully:', result);
+      
+      // Redirect to the rule page after successful submission
+      if (result.success && result.rule) {
+        setTimeout(() => {
+          router.push(`/rules/${result.rule!.slug}`);
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Failed to submit rule:', err);
+      // Error is handled by the hook and displayed in the form
+    }
+  };
+
+  const handleCancel = () => {
+    router.push('/');
   };
 
   return (
@@ -33,12 +52,10 @@ export default function SubmitPage() {
           </div>
 
           {/* Form */}
-          <div className="cyber-card p-8">
-            <SubmitRuleForm 
-              onSubmit={handleFormSubmit}
-              onCancel={() => {}}
-            />
-          </div>
+          <SubmitRuleForm 
+            onSubmit={handleFormSubmit}
+            onCancel={handleCancel}
+          />
         </motion.div>
       </main>
     </div>

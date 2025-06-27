@@ -1,260 +1,253 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  SortAsc, 
-  SortDesc, 
-  Grid3X3, 
-  List,
-  X,
-  ChevronDown
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, Filter, SortAsc, SortDesc, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import RuleCard from '@/components/RuleCard';
-import { RuleService } from '@/lib/database';
+import { CursorRule } from '@/lib/turso-service';
 import { Rule, SearchFilters, SortOption } from '@/types/rule';
-import { debounce } from '@/lib/utils';
 
 export default function RulesPage() {
-  const ruleService = RuleService.getInstance();
+  const [allRules, setAllRules] = useState<CursorRule[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFilters>({});
   const [sortBy, setSortBy] = useState<SortOption>({
     field: 'rating',
     direction: 'desc',
-    label: 'Highest Rated'
+    label: 'Rating (High to Low)'
   });
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12);
-
-  const allRules = ruleService.getAllRules();
-  const categories = ruleService.getCategories();
-  const tags = ruleService.getTags();
-
-  const sortOptions: SortOption[] = [
-    { field: 'rating', direction: 'desc', label: 'Highest Rated' },
-    { field: 'downloads', direction: 'desc', label: 'Most Downloaded' },
-    { field: 'updated_at', direction: 'desc', label: 'Recently Updated' },
-    { field: 'name', direction: 'asc', label: 'Name A-Z' },
-    { field: 'file_size', direction: 'asc', label: 'Smallest Size' },
-  ];
-
-  // Debounced search
-  const debouncedSearch = useMemo(
-    () => debounce((query: string) => {
-      setCurrentPage(1);
-    }, 300),
-    []
-  );
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    debouncedSearch(searchQuery);
-  }, [searchQuery, debouncedSearch]);
+    const fetchData = async () => {
+      try {
+        const [rulesResponse, statsResponse] = await Promise.all([
+          fetch('/api/rules?limit=1000'), // Get all rules
+          fetch('/api/stats')
+        ]);
+
+        const [rulesData, statsData] = await Promise.all([
+          rulesResponse.json(),
+          statsResponse.json()
+        ]);
+
+        if (rulesData.success) {
+          setAllRules(rulesData.data.rules);
+        }
+
+        if (statsData.success) {
+          // Extract categories from stats
+          const categoryNames = statsData.data.topCategories.map((cat: any) => cat.category);
+          setCategories(categoryNames);
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load rules. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Filter and sort rules
-  const filteredRules = useMemo(() => {
-    let rules = searchQuery.trim() 
-      ? ruleService.searchRules(searchQuery, filters)
-      : ruleService.getAllRules();
+  const filteredAndSortedRules = useMemo(() => {
+    let rules = [...allRules];
 
-    if (filters) {
-      rules = rules.filter(rule => {
-        if (filters.category && !rule.categories.includes(filters.category)) {
-          return false;
-        }
-        if (filters.rating && rule.rating < filters.rating) {
-          return false;
-        }
-        if (filters.author && !rule.author.toLowerCase().includes(filters.author.toLowerCase())) {
-          return false;
-        }
-        if (filters.source_repo && rule.source_repo !== filters.source_repo) {
-          return false;
-        }
-        return true;
-      });
+    // Apply search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      rules = rules.filter(rule =>
+        rule.name.toLowerCase().includes(query) ||
+        (rule.description?.toLowerCase().includes(query)) ||
+        (rule.author?.toLowerCase().includes(query)) ||
+        rule.tags.some(tag => tag.toLowerCase().includes(query)) ||
+        rule.categories.some(cat => cat.toLowerCase().includes(query))
+      );
     }
 
-    // Sort rules
+    // Apply filters
+    if (filters.category) {
+      rules = rules.filter(rule => rule.categories.includes(filters.category!));
+    }
+
+    if (filters.rating) {
+      rules = rules.filter(rule => rule.rating >= filters.rating!);
+    }
+
+    if (filters.author) {
+      rules = rules.filter(rule =>
+        rule.author?.toLowerCase().includes(filters.author!.toLowerCase())
+      );
+    }
+
+    // Apply sorting
     rules.sort((a, b) => {
-      const aValue = a[sortBy.field];
-      const bValue = b[sortBy.field];
+      const fieldName = sortBy.field as keyof CursorRule;
+      const aValue = a[fieldName];
+      const bValue = b[fieldName];
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        const comparison = aValue.localeCompare(bValue);
-        return sortBy.direction === 'asc' ? comparison : -comparison;
+        return sortBy.direction === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
       
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        const comparison = aValue - bValue;
-        return sortBy.direction === 'asc' ? comparison : -comparison;
+        return sortBy.direction === 'asc' 
+          ? aValue - bValue
+          : bValue - aValue;
       }
       
       return 0;
     });
 
     return rules;
-  }, [searchQuery, filters, sortBy, ruleService]);
+  }, [allRules, searchQuery, filters, sortBy]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredRules.length / itemsPerPage);
-  const paginatedRules = filteredRules.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Convert CursorRule to Rule for compatibility
+  const convertCursorRuleToRule = (cursorRule: CursorRule): Rule => ({
+    ...cursorRule,
+    description: cursorRule.description || '',
+    source_repo: cursorRule.source_repo || '',
+    author: cursorRule.author || '',
+    language_support: cursorRule.language_support || [],
+    github_user: undefined
+  });
 
-  const handleFilterChange = (key: keyof SearchFilters, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-    setCurrentPage(1);
-  };
+  const sortOptions: SortOption[] = [
+    { field: 'rating', direction: 'desc', label: 'Rating (High to Low)' },
+    { field: 'rating', direction: 'asc', label: 'Rating (Low to High)' },
+    { field: 'downloads', direction: 'desc', label: 'Downloads (Most)' },
+    { field: 'name', direction: 'asc', label: 'Name (A-Z)' },
+    { field: 'name', direction: 'desc', label: 'Name (Z-A)' },
+    { field: 'created_at', direction: 'desc', label: 'Newest First' },
+    { field: 'created_at', direction: 'asc', label: 'Oldest First' },
+  ];
 
-  const clearFilters = () => {
-    setFilters({});
-    setSearchQuery('');
-    setCurrentPage(1);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          <span className="text-slate-300">Loading rules...</span>
+        </div>
+      </div>
+    );
+  }
 
-  const activeFilterCount = Object.values(filters).filter(Boolean).length + (searchQuery ? 1 : 0);
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Error Loading Rules</h1>
+          <p className="text-slate-400 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       <main className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-7xl mx-auto"
+        >
+          {/* Header */}
+          <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Browse Cursor Rules
+              Cursor Rules Collection
             </h1>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-              Discover {allRules.length} cursor rules from the community. Find the perfect rules for your development workflow.
+              Browse through our comprehensive collection of {allRules.length} cursor rules.
+              Find the perfect configurations for your development workflow.
             </p>
-          </motion.div>
-
-          {/* Search and Filters */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between mb-6">
-            {/* Search Bar */}
-            <div className="relative flex-1 max-w-lg">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search rules, descriptions, tags..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800/50 pl-10 pr-4 py-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center gap-3">
-              {/* Filter Button */}
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`relative flex items-center space-x-2 px-4 py-3 rounded-lg border transition-all ${
-                  isFilterOpen 
-                    ? 'border-blue-500 bg-blue-500/20 text-blue-400' 
-                    : 'border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600'
-                }`}
-              >
-                <Filter className="h-4 w-4" />
-                <span>Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-blue-500 text-xs text-white flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Sort Dropdown */}
-              <div className="relative group">
-                <button className="flex items-center space-x-2 px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 transition-all">
-                  {sortBy.direction === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                  <span>{sortBy.label}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-
-                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={`${option.field}-${option.direction}`}
-                      onClick={() => setSortBy(option)}
-                      className={`w-full text-left px-4 py-3 hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                        sortBy.field === option.field && sortBy.direction === option.direction
-                          ? 'text-blue-400 bg-slate-700'
-                          : 'text-slate-300'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="flex rounded-lg border border-slate-700 bg-slate-800/50 p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-all ${
-                    viewMode === 'grid' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-all ${
-                    viewMode === 'list' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Filter Panel */}
-          <AnimatePresence>
-            {isFilterOpen && (
+          {/* Search and Controls */}
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search rules by name, description, author, or tags..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800/50 pl-10 pr-4 py-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-white"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`inline-flex items-center space-x-2 px-4 py-3 rounded-lg border transition-colors ${
+                    showFilters
+                      ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+                      : 'border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>Filters</span>
+                </button>
+                
+                {/* Sort Dropdown */}
+                <div className="relative group">
+                  <button className="flex items-center space-x-2 px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 transition-all">
+                    {sortBy.direction === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                    <span>{sortBy.label}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={`${option.field}-${option.direction}`}
+                        onClick={() => setSortBy(option)}
+                        className={`w-full text-left px-4 py-3 hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                          sortBy.field === option.field && sortBy.direction === option.direction
+                            ? 'text-blue-400 bg-slate-700'
+                            : 'text-slate-300'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters Panel */}
+            {showFilters && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="cyber-card p-6 mb-6"
+                className="mb-6 p-6 bg-slate-800/30 border border-slate-700 rounded-lg"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">Filters</h3>
-                  {activeFilterCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      className="flex items-center space-x-2 text-sm text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      <X className="h-4 w-4" />
-                      <span>Clear All</span>
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Category Filter */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Category</label>
                     <select
                       value={filters.category || ''}
-                      onChange={(e) => handleFilterChange('category', e.target.value || undefined)}
+                      onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value || undefined }))}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
                       <option value="">All Categories</option>
@@ -269,7 +262,7 @@ export default function RulesPage() {
                     <label className="block text-sm font-medium text-slate-300 mb-2">Minimum Rating</label>
                     <select
                       value={filters.rating || ''}
-                      onChange={(e) => handleFilterChange('rating', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      onChange={(e) => setFilters(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : undefined }))}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
                       <option value="">Any Rating</option>
@@ -280,20 +273,6 @@ export default function RulesPage() {
                     </select>
                   </div>
 
-                  {/* Source Repository Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Source</label>
-                    <select
-                      value={filters.source_repo || ''}
-                      onChange={(e) => handleFilterChange('source_repo', e.target.value || undefined)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      <option value="">All Sources</option>
-                      <option value="PatrickJS/awesome-cursorrules">PatrickJS</option>
-                      <option value="sk3pp3r/awesome-cursorrules">sk3pp3r</option>
-                    </select>
-                  </div>
-
                   {/* Author Filter */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Author</label>
@@ -301,121 +280,75 @@ export default function RulesPage() {
                       type="text"
                       placeholder="Filter by author..."
                       value={filters.author || ''}
-                      onChange={(e) => handleFilterChange('author', e.target.value || undefined)}
+                      onChange={(e) => setFilters(prev => ({ ...prev, author: e.target.value || undefined }))}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
-
-          {/* Results Count */}
-          <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>
-              Showing {paginatedRules.length} of {filteredRules.length} rules
-              {searchQuery && ` for "${searchQuery}"`}
-            </span>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
           </div>
-        </div>
 
-        {/* Rules Grid */}
-        <motion.div
-          layout
-          className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1 max-w-4xl mx-auto'
-          }`}
-        >
-          <AnimatePresence mode="popLayout">
-            {paginatedRules.map((rule) => (
-              <motion.div
-                key={rule.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <RuleCard 
-                  rule={rule} 
-                  variant={viewMode === 'list' ? 'compact' : 'default'}
-                  showPreview={true}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Empty State */}
-        {filteredRules.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
-          >
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-semibold text-white mb-2">No rules found</h3>
-            <p className="text-slate-400 mb-6">
-              Try adjusting your search query or filters to find what you're looking for.
+          {/* Results Summary */}
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-slate-400">
+              Showing {filteredAndSortedRules.length} of {allRules.length} rules
             </p>
-            <button
-              onClick={clearFilters}
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
-            >
-              <X className="h-4 w-4" />
-              <span>Clear Filters</span>
-            </button>
-          </motion.div>
-        )}
+            
+            {(searchQuery || Object.keys(filters).length > 0) && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({});
+                }}
+                className="text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center justify-center space-x-2 mt-12"
-          >
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          {/* Rules Grid */}
+          {filteredAndSortedRules.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              Previous
-            </button>
-
-            {[...Array(Math.min(5, totalPages))].map((_, i) => {
-              const page = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-              if (page > totalPages) return null;
-              
-              return (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`px-4 py-2 rounded-lg border transition-all ${
-                    currentPage === page
-                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                      : 'border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600'
-                  }`}
+              {filteredAndSortedRules.map((rule) => (
+                <motion.div
+                  key={rule.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  {page}
-                </button>
-              );
-            })}
-
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-300 hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  <RuleCard rule={convertCursorRuleToRule(rule)} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
             >
-              Next
-            </button>
-          </motion.div>
-        )}
+              <Search className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No rules found</h3>
+              <p className="text-slate-400 mb-4">
+                No rules match your current search and filter criteria.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({});
+                }}
+                className="text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                Clear all filters
+              </button>
+            </motion.div>
+          )}
+        </motion.div>
       </main>
     </div>
   );

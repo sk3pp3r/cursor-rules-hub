@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
@@ -15,16 +15,60 @@ import {
   Sparkles,
   Search,
   BookOpen,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 import RuleCard from '@/components/RuleCard';
-import { RuleService } from '@/lib/database';
+import { CursorRule } from '@/lib/turso-service';
+
+interface Stats {
+  totalRules: number;
+  totalAuthors: number;
+  averageRating: number;
+  topCategories: { category: string; count: number }[];
+}
 
 export default function HomePage() {
-  const ruleService = RuleService.getInstance();
-  const featuredRules = ruleService.getFeaturedRules(6);
-  const stats = ruleService.getStatsOverview();
-  const recentRules = ruleService.getRecentRules(4);
+  const [featuredRules, setFeaturedRules] = useState<CursorRule[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [recentRules, setRecentRules] = useState<CursorRule[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [rulesResponse, statsResponse, recentResponse] = await Promise.all([
+          fetch('/api/rules?limit=6&sortBy=rating&sortOrder=desc'),
+          fetch('/api/stats'),
+          fetch('/api/rules?limit=4&sortBy=created_at&sortOrder=desc')
+        ]);
+
+        const [rulesData, statsData, recentData] = await Promise.all([
+          rulesResponse.json(),
+          statsResponse.json(),
+          recentResponse.json()
+        ]);
+
+        if (rulesData.success) {
+          setFeaturedRules(rulesData.data.rules);
+        }
+        
+        if (statsData.success) {
+          setStats(statsData.data);
+        }
+        
+        if (recentData.success) {
+          setRecentRules(recentData.data.rules);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const features = [
     {
@@ -73,6 +117,17 @@ export default function HomePage() {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          <span className="text-slate-300">Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -128,7 +183,7 @@ export default function HomePage() {
                   </span>
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-20 transition-opacity"></div>
                 </Link>
-
+       
                 <Link
                   href="/submit"
                   className="group inline-flex items-center justify-center px-8 py-4 font-medium text-blue-400 transition-all duration-300 bg-blue-500/10 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 hover:border-blue-500/50"
@@ -141,29 +196,31 @@ export default function HomePage() {
               </div>
 
               {/* Stats */}
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto"
-              >
-                {[
-                  { label: 'Total Rules', value: stats.totalRules, icon: Code2 },
-                  { label: 'Categories', value: stats.totalCategories, icon: BookOpen },
-                  { label: 'Avg Rating', value: stats.avgRating.toFixed(1), icon: Star },
-                  { label: 'Community', value: '10K+', icon: Users }
-                ].map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    variants={item}
-                    className="glow-border p-4 rounded-lg text-center group hover:scale-105 transition-transform"
-                  >
-                    <stat.icon className="h-6 w-6 text-blue-400 mx-auto mb-2 group-hover:text-purple-400 transition-colors" />
-                    <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                    <div className="text-sm text-slate-400">{stat.label}</div>
-                  </motion.div>
-                ))}
-              </motion.div>
+              {stats && (
+                <motion.div
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                  className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto"
+                >
+                  {[
+                    { label: 'Total Rules', value: stats.totalRules, icon: Code2 },
+                    { label: 'Authors', value: stats.totalAuthors, icon: Users },
+                    { label: 'Avg Rating', value: stats.averageRating.toFixed(1), icon: Star },
+                    { label: 'Categories', value: stats.topCategories.length, icon: BookOpen }
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      variants={item}
+                      className="glow-border p-4 rounded-lg text-center group hover:scale-105 transition-transform"
+                    >
+                      <stat.icon className="h-6 w-6 text-blue-400 mx-auto mb-2 group-hover:text-purple-400 transition-colors" />
+                      <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                      <div className="text-sm text-slate-400">{stat.label}</div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
             </motion.div>
           </div>
 
@@ -201,7 +258,12 @@ export default function HomePage() {
               {featuredRules.map((rule, index) => (
                 <motion.div key={rule.id} variants={item}>
                   <RuleCard 
-                    rule={rule} 
+                    rule={{
+                      ...rule,
+                      description: rule.description || '',
+                      source_repo: rule.source_repo || '',
+                      author: rule.author || ''
+                    }} 
                     variant={index === 0 ? 'featured' : 'default'}
                     showPreview={true}
                   />
@@ -304,7 +366,15 @@ export default function HomePage() {
             >
               {recentRules.map((rule) => (
                 <motion.div key={rule.id} variants={item}>
-                  <RuleCard rule={rule} variant="compact" />
+                  <RuleCard 
+                    rule={{
+                      ...rule,
+                      description: rule.description || '',
+                      source_repo: rule.source_repo || '',
+                      author: rule.author || ''
+                    }} 
+                    variant="compact" 
+                  />
                 </motion.div>
               ))}
             </motion.div>

@@ -3,43 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { RuleSubmission, Rule } from '@/types/rule';
 import { generateId, generateSlug } from '@/lib/utils';
-import fs from 'fs/promises';
-import path from 'path';
+import { TursoService } from '@/lib/turso-service';
+import { tursoClient } from '@/lib/turso';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
-
-// Database file path
-const DATABASE_PATH = path.join(process.cwd(), 'src/data/cursor_rules_database.json');
-
-interface Database {
-  meta: {
-    version: string;
-    total_rules: number;
-    last_updated: string;
-    sources: string[];
-  };
-  rules: Rule[];
-}
-
-async function loadDatabase(): Promise<Database> {
-  try {
-    const data = await fs.readFile(DATABASE_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading database:', error);
-    throw new Error('Failed to load database');
-  }
-}
-
-async function saveDatabase(database: Database): Promise<void> {
-  try {
-    await fs.writeFile(DATABASE_PATH, JSON.stringify(database, null, 2));
-  } catch (error) {
-    console.error('Error saving database:', error);
-    throw new Error('Failed to save database');
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,15 +55,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Load existing database
-    const database = await loadDatabase();
-
     // Generate rule data with authenticated user information
     const now = new Date().toISOString();
-    const rule: Rule = {
-      id: generateId(),
+    const ruleId = generateId();
+    const baseSlug = generateSlug(submission.name);
+    
+    // Check if slug already exists and make it unique if needed
+    let uniqueSlug = baseSlug;
+    let counter = 2;
+    
+    while (await TursoService.getRuleBySlug(uniqueSlug) !== null) {
+      uniqueSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    const rule = {
+      id: ruleId,
       name: submission.name.trim(),
-      slug: generateSlug(submission.name),
+      slug: uniqueSlug,
       description: submission.description.trim(),
       content: submission.content.trim(),
       author: submission.author.trim(),
@@ -109,32 +86,55 @@ export async function POST(request: NextRequest) {
       favorites: 0,
       file_size: new Blob([submission.content]).size,
       language_support: extractLanguageSupport(submission.content, submission.tags),
-      // Add GitHub user information for tracking
-      github_user: {
-        id: session.user.githubId,
-        username: session.user.githubUsername,
-        avatar_url: session.user.image || undefined
-      }
     };
 
-    // Add the new rule to the database
-    database.rules.unshift(rule); // Add to beginning of array
-    database.meta.total_rules = database.rules.length;
-    database.meta.last_updated = now;
+    // Insert the new rule into Turso database
+    await tursoClient.execute({
+      sql: `INSERT INTO cursor_rules (
+        id, name, slug, description, content, author, source_repo, 
+        categories, tags, created_at, updated_at, rating, downloads, 
+        favorites, file_size, language_support
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        rule.id,
+        rule.name,
+        rule.slug,
+        rule.description,
+        rule.content,
+        rule.author,
+        rule.source_repo,
+        JSON.stringify(rule.categories),
+        JSON.stringify(rule.tags),
+        rule.created_at,
+        rule.updated_at,
+        rule.rating,
+        rule.downloads,
+        rule.favorites,
+        rule.file_size,
+        JSON.stringify(rule.language_support)
+      ]
+    });
 
-    // Add community-submission to sources if not already present
-    if (!database.meta.sources.includes('community-submission')) {
-      database.meta.sources.push('community-submission');
+    // Update meta information
+    const currentMeta = await TursoService.getMeta();
+    if (currentMeta) {
+      const newTotalRules = currentMeta.total_rules + 1;
+      const sources = currentMeta.sources.includes('community-submission') 
+        ? currentMeta.sources 
+        : [...currentMeta.sources, 'community-submission'];
+
+      await tursoClient.execute({
+        sql: `UPDATE meta SET total_rules = ?, last_updated = ?, sources = ? WHERE id = 1`,
+        args: [newTotalRules, now, JSON.stringify(sources)]
+      });
     }
 
-    // Save the updated database
-    await saveDatabase(database);
-
-    console.log('Rule submission saved to database:', {
+    console.log('Rule submission saved to Turso database:', {
       id: rule.id,
       name: rule.name,
+      slug: rule.slug,
       author: rule.author,
-      github_user: rule.github_user?.username,
+      github_user: session.user.githubUsername,
       category: submission.category,
       tags: rule.tags,
       content_length: rule.content.length,
@@ -159,14 +159,17 @@ export async function POST(request: NextRequest) {
         slug: rule.slug,
         author: rule.author,
         category: submission.category,
-        github_user: rule.github_user?.username
+        github_user: session.user.githubUsername
       }
     }, { status: 201 });
 
   } catch (error) {
     console.error('Error processing rule submission:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -203,6 +206,15 @@ function extractLanguageSupport(content: string, tags: string[]): string[] {
   if (contentLower.includes('react')) languages.add('React');
   if (contentLower.includes('vue')) languages.add('Vue');
   if (contentLower.includes('angular')) languages.add('Angular');
+  if (contentLower.includes('node.js') || contentLower.includes('nodejs')) languages.add('Node.js');
+  if (contentLower.includes('java') && !contentLower.includes('javascript')) languages.add('Java');
+  if (contentLower.includes('golang') || contentLower.includes(' go ')) languages.add('Go');
+  if (contentLower.includes('rust')) languages.add('Rust');
+  if (contentLower.includes('php')) languages.add('PHP');
+  if (contentLower.includes('c++') || contentLower.includes('cpp')) languages.add('C++');
+  if (contentLower.includes('c#') || contentLower.includes('csharp')) languages.add('C#');
+  if (contentLower.includes('swift')) languages.add('Swift');
+  if (contentLower.includes('kotlin')) languages.add('Kotlin');
 
-  return Array.from(languages).length > 0 ? Array.from(languages) : ['General'];
+  return Array.from(languages);
 } 
