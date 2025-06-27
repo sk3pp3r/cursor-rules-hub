@@ -1,55 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { TursoService } from '@/lib/turso-service';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-const DATABASE_PATH = path.join(process.cwd(), 'src/data/cursor_rules_database.json');
-
-interface Database {
-  meta: {
-    version: string;
-    total_rules: number;
-    last_updated: string;
-    sources: string[];
-  };
-  rules: any[];
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const sourceFilter = searchParams.get('source');
-    const limit = searchParams.get('limit');
-    const offset = searchParams.get('offset');
+    const searchParams = request.nextUrl.searchParams;
+    
+    // Parse query parameters
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const search = searchParams.get('search') || undefined;
+    const category = searchParams.get('category') || undefined;
+    const author = searchParams.get('author') || undefined;
+    const sortBy = (searchParams.get('sortBy') as 'name' | 'rating' | 'created_at' | 'downloads') || 'rating';
+    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
 
-    // Load database
-    const data = await fs.readFile(DATABASE_PATH, 'utf-8');
-    const database: Database = JSON.parse(data);
+    // Get rules from Turso
+    const rules = await TursoService.getAllRules({
+      limit,
+      offset,
+      search,
+      category,
+      author,
+      sortBy,
+      sortOrder
+    });
 
-    let rules = database.rules;
-
-    // Filter by source if specified
-    if (sourceFilter) {
-      rules = rules.filter(rule => rule.source_repo === sourceFilter);
-    }
-
-    // Apply pagination
-    const limitNum = limit ? parseInt(limit) : 50;
-    const offsetNum = offset ? parseInt(offset) : 0;
-    const paginatedRules = rules.slice(offsetNum, offsetNum + limitNum);
+    // Get meta information
+    const meta = await TursoService.getMeta();
 
     return NextResponse.json({
       success: true,
       data: {
-        rules: paginatedRules,
-        meta: {
-          ...database.meta,
-          filtered_count: rules.length,
-          returned_count: paginatedRules.length,
-          offset: offsetNum,
-          limit: limitNum
+        rules,
+        meta,
+        pagination: {
+          limit,
+          offset,
+          count: rules.length
         }
       }
     });
@@ -57,7 +47,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching rules:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch rules' },
+      { 
+        success: false, 
+        error: 'Failed to fetch rules',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
