@@ -44,7 +44,7 @@ export default function RulePage({ params }: RulePageProps) {
     const fetchRuleData = async () => {
       try {
         // Fetch the rule by slug
-        const ruleResponse = await fetch(`/api/rules/${params.slug}`);
+        const ruleResponse = await fetch(`/api/rules/${encodeURIComponent(params.slug)}`);
         const ruleData = await ruleResponse.json();
 
         if (!ruleData.success) {
@@ -59,7 +59,7 @@ export default function RulePage({ params }: RulePageProps) {
 
         // Fetch related rules if we have categories
         if (ruleData.data.rule.categories.length > 0) {
-          const relatedResponse = await fetch(`/api/rules?category=${ruleData.data.rule.categories[0]}&limit=4`);
+          const relatedResponse = await fetch(`/api/rules?category=${encodeURIComponent(ruleData.data.rule.categories[0])}&limit=4`);
           const relatedData = await relatedResponse.json();
           
           if (relatedData.success) {
@@ -94,7 +94,7 @@ export default function RulePage({ params }: RulePageProps) {
 
     try {
       // Track download by calling the POST endpoint
-      await fetch(`/api/rules/${params.slug}`, { method: 'POST' });
+      await fetch(`/api/rules/${encodeURIComponent(params.slug)}`, { method: 'POST' });
       
       // Create and download file
       const blob = new Blob([rule.content], { type: 'text/plain' });

@@ -26,6 +26,8 @@ export interface DatabaseMeta {
   sources: string[];
 }
 
+const SORT_COLUMNS: readonly string[] = ['name', 'rating', 'created_at', 'downloads'];
+
 export class TursoService {
   // Get all cursor rules with optional filtering
   static async getAllRules(options?: {
@@ -69,8 +71,11 @@ export class TursoService {
       args.push(author);
     }
 
-    // Add sorting
-    sql += ` ORDER BY ${sortBy} ${sortOrder.toUpperCase()}`;
+    // Add sorting. Column and direction can't be bound as parameters, so only
+    // whitelisted values are ever interpolated into the SQL string.
+    const safeSortBy = SORT_COLUMNS.includes(sortBy) ? sortBy : 'rating';
+    const safeSortOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    sql += ` ORDER BY ${safeSortBy} ${safeSortOrder}`;
 
     // Add pagination
     sql += ' LIMIT ? OFFSET ?';

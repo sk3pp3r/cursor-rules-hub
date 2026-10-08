@@ -15,23 +15,16 @@ export async function GET(
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Rule not found',
-          message: `No rule found with slug: ${slug}`
+          error: 'Rule not found'
         },
         { status: 404 }
       );
     }
 
-    // Increment download count
-    await TursoService.incrementDownloadCount(rule.id);
-
     return NextResponse.json({
       success: true,
       data: {
-        rule: {
-          ...rule,
-          downloads: rule.downloads + 1 // Reflect the increment
-        }
+        rule
       }
     });
 
@@ -40,10 +33,40 @@ export async function GET(
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to fetch rule',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Failed to fetch rule'
       },
       { status: 500 }
     );
   }
-} 
+}
+
+// Track a download. Viewing a rule (GET) must not count as a download.
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
+  try {
+    const rule = await TursoService.getRuleBySlug(params.slug);
+
+    if (!rule) {
+      return NextResponse.json(
+        { success: false, error: 'Rule not found' },
+        { status: 404 }
+      );
+    }
+
+    await TursoService.incrementDownloadCount(rule.id);
+
+    return NextResponse.json({
+      success: true,
+      data: { downloads: rule.downloads + 1 }
+    });
+
+  } catch (error) {
+    console.error('Error tracking download:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to track download' },
+      { status: 500 }
+    );
+  }
+}
