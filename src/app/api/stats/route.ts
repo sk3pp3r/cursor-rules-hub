@@ -20,8 +20,7 @@ export async function GET() {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to fetch statistics',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Failed to fetch statistics'
       },
       { status: 500 }
     );

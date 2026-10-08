@@ -20,45 +20,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const submission: RuleSubmission = await request.json();
-
-    // Validate required fields
-    const requiredFields = ['name', 'category', 'description', 'content', 'author', 'tags'];
-    const missingFields = requiredFields.filter(field => !submission[field as keyof RuleSubmission]);
-
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
+    let submission: RuleSubmission;
+    try {
+      submission = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    // Validate minimum lengths
-    if (submission.description.length < 50) {
-      return NextResponse.json(
-        { error: 'Description must be at least 50 characters long' },
-        { status: 400 }
-      );
-    }
-
-    if (submission.content.length < 100) {
-      return NextResponse.json(
-        { error: 'Rule content must be at least 100 characters long' },
-        { status: 400 }
-      );
-    }
-
-    if (submission.tags.length === 0) {
-      return NextResponse.json(
-        { error: 'At least one tag is required' },
-        { status: 400 }
-      );
+    const validationError = validateSubmission(submission);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
     // Generate rule data with authenticated user information
     const now = new Date().toISOString();
     const ruleId = generateId();
-    const baseSlug = generateSlug(submission.name);
+    const baseSlug = generateSlug(submission.name) || `rule-${ruleId}`;
     
     // Check if slug already exists and make it unique if needed
     let uniqueSlug = baseSlug;
@@ -78,7 +55,7 @@ export async function POST(request: NextRequest) {
       author: submission.author.trim(),
       source_repo: 'community-submission',
       categories: [submission.category],
-      tags: submission.tags.map(tag => tag.toLowerCase().trim()),
+      tags: Array.from(new Set(submission.tags.map(tag => tag.toLowerCase().trim()))),
       created_at: now,
       updated_at: now,
       rating: 0,
@@ -134,19 +111,11 @@ export async function POST(request: NextRequest) {
       name: rule.name,
       slug: rule.slug,
       author: rule.author,
-      github_user: session.user.githubUsername,
       category: submission.category,
-      tags: rule.tags,
       content_length: rule.content.length,
-      usage_examples: submission.usage_examples || 'None provided',
-      prerequisites: submission.prerequisites || 'None provided',
-      compatibility_notes: submission.compatibility_notes || 'None provided',
-      external_links: submission.external_links || [],
       submitted_by: {
         user_id: session.user.githubId,
-        username: session.user.githubUsername,
-        email: session.user.email,
-        name: session.user.name
+        username: session.user.githubUsername
       }
     });
 
@@ -167,12 +136,65 @@ export async function POST(request: NextRequest) {
     console.error('Error processing rule submission:', error);
     return NextResponse.json(
       { 
-        error: 'Internal server error', 
-        message: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Internal server error'
       },
       { status: 500 }
     );
   }
+}
+
+const MAX_LENGTHS = {
+  name: 100,
+  category: 50,
+  description: 1000,
+  content: 100_000,
+  author: 100,
+  tag: 50,
+} as const;
+const MAX_TAGS = 20;
+
+// Returns an error message, or null when the submission is valid. Checks types
+// as well as presence: the body is untrusted JSON, so e.g. `tags` may be a
+// string and `name` may be a number.
+function validateSubmission(submission: unknown): string | null {
+  if (!submission || typeof submission !== 'object') {
+    return 'Invalid submission';
+  }
+  const s = submission as Record<string, unknown>;
+
+  const stringFields = ['name', 'category', 'description', 'content', 'author'] as const;
+  const missingFields: string[] = stringFields.filter(
+    field => typeof s[field] !== 'string' || !(s[field] as string).trim()
+  );
+  if (!Array.isArray(s.tags) || s.tags.length === 0) {
+    missingFields.push('tags');
+  }
+  if (missingFields.length > 0) {
+    return `Missing required fields: ${missingFields.join(', ')}`;
+  }
+
+  for (const field of stringFields) {
+    if ((s[field] as string).length > MAX_LENGTHS[field]) {
+      return `${field} must be at most ${MAX_LENGTHS[field]} characters long`;
+    }
+  }
+
+  if ((s.description as string).trim().length < 50) {
+    return 'Description must be at least 50 characters long';
+  }
+  if ((s.content as string).trim().length < 100) {
+    return 'Rule content must be at least 100 characters long';
+  }
+
+  const tags = s.tags as unknown[];
+  if (tags.length > MAX_TAGS) {
+    return `At most ${MAX_TAGS} tags are allowed`;
+  }
+  if (tags.some(tag => typeof tag !== 'string' || !tag.trim() || tag.length > MAX_LENGTHS.tag)) {
+    return `Tags must be non-empty strings of at most ${MAX_LENGTHS.tag} characters`;
+  }
+
+  return null;
 }
 
 function extractLanguageSupport(content: string, tags: string[]): string[] {

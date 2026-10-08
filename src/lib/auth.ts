@@ -15,18 +15,18 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account, profile }) {
-      // Persist the OAuth access_token and or the user id to the token right after signin
+      // Persist the GitHub user id to the token right after signin. The OAuth
+      // access token is intentionally not stored: nothing uses it, and the
+      // session callback would otherwise expose it to client-side JS.
       if (account && profile) {
-        token.accessToken = account.access_token;
         token.githubId = profile.id?.toString();
         token.githubUsername = profile.login;
       }
       return token;
     },
     async session({ session, token }) {
-      // Send properties to the client, like an access_token and user id from a provider.
+      // Send properties to the client, like the user id from the provider.
       if (session.user) {
-        session.accessToken = token.accessToken as string;
         session.user.githubId = token.githubId as string;
         session.user.githubUsername = token.githubUsername as string;
       }
